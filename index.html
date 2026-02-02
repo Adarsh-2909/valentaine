@@ -69,7 +69,6 @@
         .prop-btn { padding: 18px 45px; border-radius: 50px; border: none; font-family: 'Playfair Display', serif; font-weight: bold; cursor: pointer; font-size: 1.1rem; }
         .btn-yes { background: #ff4757; color: white; box-shadow: 0 0 30px rgba(255, 71, 87, 0.5); transition: transform 0.3s; z-index: 5002; }
         
-        /* Fixed position for No button visibility */
         .btn-no { background: #222; color: #666; position: absolute; transition: all 0.1s ease-out; z-index: 5001; border: 1px solid #444; left: 60%; top: 50%; transform: translateY(-50%); }
         
         #final-message { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; justify-content: center; align-items: center; background: #000; z-index: 6000; text-align: center; }
@@ -92,7 +91,7 @@
     <div id="live-counter-overlay"></div>
     <canvas id="fireworks-canvas"></canvas>
 
-    <audio id="bg-music">
+    <audio id="bg-music" preload="auto" loop>
         <source src="Theri_-_Bus_Love_Bgm_128kbps.mp3" type="audio/mpeg">
     </audio>
 
@@ -112,7 +111,7 @@
     <div id="intro-scene"><p class="story-text">“Every love story is beautiful…<br>But ours is my favorite ❤️”</p></div>
     <div id="montage-container">
         <div class="memory active"><div class="photo-bg" style="background-image: url('bhuvi1.jpeg');"></div><h2 class="memory-text">“The day I first saw you…”</h2></div>
-        <div class="memory"><div class="photo-bg" style="background-image: url('bhuvi2.jpeg');"></div><h2 class="memory-text">“The moment I knew……”</h2></div>
+        <div class="memory"><div class="photo-bg" style="background-image: url('bhuvi2.jpeg');"></div><h2 class="memory-text">“The moment I knew…”</h2></div>
         <div class="memory"><div class="photo-bg" style="background-image: url('bhuvi3.jpeg');"></div><h2 class="memory-text">“Every smile of yours is my favorite view”</h2></div>
         <div class="memory"><div class="photo-bg" style="background-image: url('bhuvi4.jpeg');"></div><h2 class="memory-text">“I didn’t know what love was until you became my comfort”</h2></div>
         <div class="memory"><div class="photo-bg" style="background-image: url('bhuvi5.jpeg');"></div><h2 class="memory-text">“You’re not just part of my life—you’re the reason it feels complete”</h2></div>
@@ -163,24 +162,26 @@
         const memories = document.querySelectorAll('.memory');
         const message = "I wanted to tell you how much you mean to me. Every moment spent with you is a treasure. Thank you for being my person.\n\nForever Yours ❤️";
 
-        music.addEventListener('timeupdate', function() {
-            if (this.currentTime > (this.duration - 0.4)) {
-                this.currentTime = 0;
-                this.play();
+        // Mobile Music Unlocker
+        window.addEventListener('touchstart', function() {
+            if (music.paused && step === 0) {
+                music.play().then(() => {
+                    music.pause();
+                    music.currentTime = 0;
+                }).catch(() => {});
             }
-        });
+        }, { once: true });
 
         function fadeOutMusic() {
-            music.ontimeupdate = null; 
             let fadeOutInterval = setInterval(() => {
-                if (music.volume > 0.02) {
-                    music.volume -= 0.02;
+                if (music.volume > 0.05) {
+                    music.volume -= 0.05;
                 } else {
                     music.pause();
                     music.volume = 1; 
                     clearInterval(fadeOutInterval);
                 }
-            }, 120);
+            }, 150);
         }
 
         const dragHandle = document.getElementById('dragHandle');
@@ -191,7 +192,7 @@
         dragHandle.addEventListener('mousedown', startDrag);
         dragHandle.addEventListener('touchstart', startDrag);
         window.addEventListener('mousemove', drag);
-        window.addEventListener('touchmove', drag);
+        window.addEventListener('touchmove', drag, {passive: false});
         window.addEventListener('mouseup', endDrag);
         window.addEventListener('touchend', endDrag);
 
@@ -216,7 +217,7 @@
         }
 
         function startStory() {
-            music.play();
+            music.play().catch(e => console.log("Music play failed", e));
             document.getElementById('overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('overlay').style.display = 'none';
@@ -245,7 +246,7 @@
                     currentMemory++; 
                     memories[currentMemory].classList.add('active'); 
                     if (currentMemory === memories.length - 1) {
-                        setTimeout(fadeOutMusic, 1000); 
+                        setTimeout(fadeOutMusic, 1500); 
                     }
                 } else { 
                     clearInterval(interval); 
@@ -400,7 +401,3 @@
     </script>
 </body>
 </html>
-
-
-
-
