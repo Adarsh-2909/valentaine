@@ -6,7 +6,7 @@
     <title>Our Love Story</title>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;1,600&display=swap" rel="stylesheet">
     <style>
-        /* All original styles maintained exactly as requested */
+        /* All original styles maintained exactly */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #000; color: #ffffff; font-family: 'Playfair Display', serif; overflow: hidden; height: 100vh; }
         #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; transition: opacity 1.5s ease, transform 1.5s ease; }
@@ -160,27 +160,7 @@
         const memories = document.querySelectorAll('.memory');
         const message = "I wanted to tell you how much you mean to me. Every moment spent with you is a treasure. Thank you for being my person.\n\nForever Yours ❤️";
 
-        // IMPORTANT MOBILE FIX: Unlock audio engine on first touch
-        const unlockAudio = () => {
-            music.play().then(() => {
-                music.pause(); // Just priming the engine
-                music.currentTime = 0;
-            }).catch(e => console.log("Audio unlock failed:", e));
-            document.removeEventListener('touchstart', unlockAudio);
-            document.removeEventListener('mousedown', unlockAudio);
-        };
-        document.addEventListener('touchstart', unlockAudio);
-        document.addEventListener('mousedown', unlockAudio);
-
-        music.addEventListener('timeupdate', function() {
-            if (this.currentTime > (this.duration - 0.4)) {
-                this.currentTime = 0;
-                this.play().catch(() => {});
-            }
-        });
-
         function fadeOutMusic() {
-            music.ontimeupdate = null; 
             let fadeOutInterval = setInterval(() => {
                 if (music.volume > 0.05) {
                     music.volume -= 0.05;
@@ -205,6 +185,7 @@
         window.addEventListener('touchend', endDrag);
 
         function startDrag(e) { isDragging = true; startX = (e.pageX || e.touches[0].pageX) - dragHandle.offsetLeft; }
+        
         function drag(e) {
             if (!isDragging) return;
             e.preventDefault();
@@ -213,9 +194,14 @@
             const maxDrag = sliderArea.offsetWidth - dragHandle.offsetWidth; 
             if (walk >= 0 && walk <= maxDrag) {
                 dragHandle.style.left = walk + 'px';
-                if (walk > maxDrag * 0.85) { isDragging = false; startStory(); }
+                // Trigger logic: when the slider reaches the target photo
+                if (walk > maxDrag * 0.85) { 
+                    isDragging = false; 
+                    startStory(); 
+                }
             }
         }
+
         function endDrag() {
             if (!isDragging) return;
             isDragging = false;
@@ -225,8 +211,11 @@
         }
 
         function startStory() {
-            // Re-triggering play here after interaction
-            music.play().catch(e => console.log("Play blocked:", e));
+            // This play() call is allowed here because it is triggered by the "drag" gesture
+            music.play().catch(e => {
+                console.log("Browser still blocking. Ensure phone isn't on Silent Mode.");
+            });
+            
             document.getElementById('overlay').style.opacity = '0';
             setTimeout(() => {
                 document.getElementById('overlay').style.display = 'none';
@@ -265,6 +254,7 @@
             }, 3500); 
         }
 
+        // Original Support Functions
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
@@ -375,30 +365,20 @@
             const btn = document.getElementById('no-btn');
             const yesBtn = document.getElementById('yes-btn').getBoundingClientRect();
             const question = document.getElementById('prop-q').getBoundingClientRect();
-            
             let newX, newY, tooClose;
             const padding = 30;
-
             let attempts = 0;
             do {
                 tooClose = false;
                 newX = Math.random() * (window.innerWidth - btn.offsetWidth - 20) + 10;
                 newY = Math.random() * (window.innerHeight - btn.offsetHeight - 20) + 10;
-
                 if (newX < question.right + padding && newX + btn.offsetWidth > question.left - padding && 
-                    newY < question.bottom + padding && newY + btn.offsetHeight > question.top - padding) {
-                    tooClose = true;
-                }
+                    newY < question.bottom + padding && newY + btn.offsetHeight > question.top - padding) tooClose = true;
                 if (newX < yesBtn.right + padding && newX + btn.offsetWidth > yesBtn.left - padding && 
-                    newY < yesBtn.bottom + padding && newY + btn.offsetHeight > yesBtn.top - padding) {
-                    tooClose = true;
-                }
-                attempts++;
-                if(attempts > 50) break;
+                    newY < yesBtn.bottom + padding && newY + btn.offsetHeight > yesBtn.top - padding) tooClose = true;
+                attempts++; if(attempts > 50) break;
             } while (tooClose);
-
-            btn.style.left = newX + 'px';
-            btn.style.top = newY + 'px';
+            btn.style.left = newX + 'px'; btn.style.top = newY + 'px';
         }
 
         function accepted(e) { e.stopPropagation(); triggerExplosion(); document.getElementById('proposal-scene').style.opacity = '0'; setTimeout(() => { document.getElementById('proposal-scene').style.display = 'none'; document.getElementById('final-message').style.display = 'flex'; animateFinalLetters("❤️ I love you\nHappy Valentine's Day Bangariiii.....❤️"); }, 1500); }
