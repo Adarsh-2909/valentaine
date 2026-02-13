@@ -168,6 +168,7 @@
         const sliderArea = document.getElementById('sliderArea');
         let isDragging = false;
         let startX;
+        let audioUnlocked = false;
 
         dragHandle.addEventListener('mousedown', startDrag);
         dragHandle.addEventListener('touchstart', startDrag);
@@ -179,8 +180,14 @@
         function startDrag(e) { 
             isDragging = true; 
             startX = (e.pageX || e.touches[0].pageX) - dragHandle.offsetLeft;
-            // IMPORTANT: Prime audio engine on the first touch of the slider
-            music.load();
+            
+            // FIX FOR MOBILE: Unlock audio on first touch
+            if (!audioUnlocked) {
+                music.play().then(() => {
+                    music.pause(); // Just "prime" the audio engine
+                    audioUnlocked = true;
+                }).catch(e => console.log("Audio waiting for slide..."));
+            }
         }
 
         function drag(e) {
@@ -207,8 +214,9 @@
         }
 
         function startStory() {
-            // Audio starts automatically here because user is already interacting via "drag"
-            music.play().catch(err => console.log("Audio blocked. Check Silent Mode."));
+            // This now works on mobile because we primed it in startDrag
+            music.currentTime = 0;
+            music.play().catch(err => console.log("Audio error:", err));
             
             document.getElementById('overlay').style.opacity = '0';
             setTimeout(() => {
@@ -242,7 +250,6 @@
             }, 3500); 
         }
 
-        // Additional original logic for fireworks, hearts, gift, letter, etc.
         const canvas = document.getElementById('fireworks-canvas');
         const ctx = canvas.getContext('2d');
         let particles = [];
