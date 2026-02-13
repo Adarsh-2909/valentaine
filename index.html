@@ -8,7 +8,13 @@
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { background-color: #000; color: #ffffff; font-family: 'Playfair Display', serif; overflow: hidden; height: 100vh; }
-        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; transition: opacity 1.5s ease, transform 1.5s ease; }
+        
+        /* New Start Screen to fix Mobile Audio */
+        #start-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 2000; transition: 1s; }
+        #start-btn { width: 100px; height: 100px; background: #ff4757; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 3rem; cursor: pointer; box-shadow: 0 0 30px #ff4757; animation: pulse 2s infinite; border: none; }
+        @keyframes pulse { 0% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7); } 70% { transform: scale(1); box-shadow: 0 0 0 20px rgba(255, 71, 87, 0); } 100% { transform: scale(0.9); box-shadow: 0 0 0 0 rgba(255, 71, 87, 0); } }
+
+        #overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; transition: opacity 1.5s ease; }
         .slider-area { width: 90%; max-width: 500px; height: 300px; position: relative; display: flex; align-items: center; margin-top: 30px; }
         .target-img { width: 150px; height: 220px; background-size: contain; background-repeat: no-repeat; background-position: center; position: absolute; right: 0; filter: drop-shadow(0 0 15px rgba(255, 71, 87, 0.4)); }
         .drag-img { width: 150px; height: 220px; background-size: contain; background-repeat: no-repeat; background-position: center; position: absolute; left: 0; cursor: grab; touch-action: none; z-index: 1001; filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.3)); }
@@ -77,6 +83,11 @@
     </style>
 </head>
 <body onclick="handleInteraction()">
+
+    <div id="start-screen">
+        <button id="start-btn" onclick="initExperience(event)">❤️</button>
+        <p style="margin-top: 20px; font-style: italic; color: #777;">Tap to begin...</p>
+    </div>
 
     <div id="live-counter-overlay"></div>
     <canvas id="fireworks-canvas"></canvas>
@@ -152,6 +163,22 @@
         const memories = document.querySelectorAll('.memory');
         const message = "I wanted to tell you how much you mean to me. Every moment spent with you is a treasure. Thank you for being my person.\n\nForever Yours ❤️";
 
+        // Step 1: Initialize with user gesture
+        function initExperience(e) {
+            e.stopPropagation();
+            // Start silent to unlock browser audio
+            music.play();
+            music.pause();
+            music.currentTime = 0;
+            
+            document.getElementById('start-screen').style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('start-screen').style.display = 'none';
+                document.getElementById('overlay').style.display = 'flex';
+                setTimeout(() => document.getElementById('overlay').style.opacity = '1', 50);
+            }, 1000);
+        }
+
         function fadeOutMusic() {
             let fadeOutInterval = setInterval(() => {
                 if (music.volume > 0.05) {
@@ -168,7 +195,6 @@
         const sliderArea = document.getElementById('sliderArea');
         let isDragging = false;
         let startX;
-        let audioUnlocked = false;
 
         dragHandle.addEventListener('mousedown', startDrag);
         dragHandle.addEventListener('touchstart', startDrag);
@@ -180,14 +206,6 @@
         function startDrag(e) { 
             isDragging = true; 
             startX = (e.pageX || e.touches[0].pageX) - dragHandle.offsetLeft;
-            
-            // FIX FOR MOBILE: Unlock audio on first touch
-            if (!audioUnlocked) {
-                music.play().then(() => {
-                    music.pause(); // Just "prime" the audio engine
-                    audioUnlocked = true;
-                }).catch(e => console.log("Audio waiting for slide..."));
-            }
         }
 
         function drag(e) {
@@ -214,9 +232,7 @@
         }
 
         function startStory() {
-            // This now works on mobile because we primed it in startDrag
-            music.currentTime = 0;
-            music.play().catch(err => console.log("Audio error:", err));
+            music.play().catch(err => console.log("Audio issue:", err));
             
             document.getElementById('overlay').style.opacity = '0';
             setTimeout(() => {
